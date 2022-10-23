@@ -3,27 +3,28 @@
 
 # auto mount usb
 mkdir -p /media/usb
-chown -R $USER:$GROUP /media/usb
 if [ -z "$(grep /media/usb /etc/fstab)" ]; then
-    echo "/dev/sda1 /media/usb auto auto,nofail,noatime,users,ro 0 0" >> /etc/fstab
+    sudo echo "/dev/sda1 /media/usb auto auto,nofail,noatime,users,ro 0 0" | sudo tee -a /etc/fstab
 fi
 
 # turn off screen blanking
 
 if [ -z "$(grep '\-dpms' /etc/lightdm/lightdm.conf)" ]; then
-    echo "[SeatDefaults]" >> /etc/lightdm/lightdm.conf
-    echo "xserver-command=X -s 0 -dpms" >> /etc/lightdm/lightdm.conf
+    sudo echo "[SeatDefaults]" | sudo tee -a /etc/lightdm/lightdm.conf
+    sudo echo "xserver-command=X -s 0 -dpms" | sudo tee -a /etc/lightdm/lightdm.conf
 fi
 
 # remove point-rpi (automatic pointer positioning)
-sed -i '/point-rpi/d' /etc/xdg/lxsession/LXDE-pi/autostart
+sudo sed -i '/point-rpi/d' /etc/xdg/lxsession/LXDE-pi/autostart
+sudo sed -i '/xscreensaver/d' /etc/xdg/lxsession/LXDE-pi/autostart
+sudo sed -i '/pcmanfm/d' /etc/xdg/lxsession/LXDE-pi/autostart
 
 # hide cursor
 if [ -z $(which unclutter) ]; then
-	apt-get install -y unclutter
+	sudo apt-get install -y unclutter
 fi
 if [ -z "$(grep unclutter /etc/xdg/lxsession/LXDE-pi/autostart)" ]; then
-	echo "unclutter &" >> /etc/xdg/lxsession/LXDE-pi/autostart
+	sudo echo "unclutter &" | sudo tee -a /etc/xdg/lxsession/LXDE-pi/autostart
 fi
 
 # turn off screen automatically at certain time
@@ -39,9 +40,9 @@ fi
 rm mycron
 
 if [ -z $(which feh) ]; then
-	apt-get install -y feh
+	sudo apt-get install -y feh
 fi
-cat << EOF > /run_slideshow.sh
+cat << EOF > /home/$USER/run_slideshow.sh
 feh \
     --recursive \
     --randomize \
@@ -54,11 +55,11 @@ feh \
     /media/usb
 EOF
 
+chmod +x ~/run_slideshow.sh
+
 if [ -z "$(grep run_slideshow /etc/xdg/lxsession/LXDE-pi/autostart)" ]; then
-	cat << EOF >> /etc/xdg/lxsession/LXDE-pi/autostart
-bash /run_slideshow.sh &
-	EOF
+	echo "/home/$USER/run_slideshow.sh &" | sudo tee -a /etc/xdg/lxsession/LXDE-pi/autostart
 fi
 
-raspi-config nonint enable_overlayfs
+# raspi-config nonint enable_overlayfs
 
